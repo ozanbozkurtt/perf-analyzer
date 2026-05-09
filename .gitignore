@@ -1,0 +1,31 @@
+# Binaries
+bin/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+
+# Test coverage
+*.coverprofile
+coverage.txt
+*.out
+
+# Temporary files
+*.tmp
+*.temp
+.claude/

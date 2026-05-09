@@ -1,0 +1,179 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          cache: true
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event.inputs.version }}" != "" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${{ github.ref_name }}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build binaries
+        run: |
+          mkdir -p dist
+
+          # Linux amd64
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w -X main.Version=${{ steps.version.outputs.version }} -X main.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X main.Commit=${{ github.sha }}" \
+            -o dist/benchmark-linux-x86_64-${{ steps.version.outputs.version }} \
+            ./cmd/benchmark
+
+          # Linux arm64
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w -X main.Version=${{ steps.version.outputs.version }} -X main.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X main.Commit=${{ github.sha }}" \
+            -o dist/benchmark-linux-arm64-${{ steps.version.outputs.version }} \
+            ./cmd/benchmark
+
+          # macOS amd64
+          GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w -X main.Version=${{ steps.version.outputs.version }} -X main.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X main.Commit=${{ github.sha }}" \
+            -o dist/benchmark-macos-x86_64-${{ steps.version.outputs.version }} \
+            ./cmd/benchmark
+
+          # macOS arm64
+          GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w -X main.Version=${{ steps.version.outputs.version }} -X main.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X main.Commit=${{ github.sha }}" \
+            -o dist/benchmark-macos-arm64-${{ steps.version.outputs.version }} \
+            ./cmd/benchmark
+
+          # Windows amd64
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w -X main.Version=${{ steps.version.outputs.version }} -X main.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X main.Commit=${{ github.sha }}" \
+            -o dist/benchmark-windows-x86_64-${{ steps.version.outputs.version }}.exe \
+            ./cmd/benchmark
+
+      - name: Create checksums
+        run: |
+          cd dist
+          sha256sum benchmark-* > checksums.txt
+          cat checksums.txt
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          body: |
+            ## Releases
+
+            Platform seçin ve binary'yi indirin:
+
+            | Platform | Binary |
+            |----------|--------|
+            | macOS (Apple Silicon M1/M2) | `benchmark-macos-arm64-${{ steps.version.outputs.version }}` |
+            | macOS (Intel) | `benchmark-macos-x86_64-${{ steps.version.outputs.version }}` |
+            | Linux (ARM64) | `benchmark-linux-arm64-${{ steps.version.outputs.version }}` |
+            | Linux (x86_64) | `benchmark-linux-x86_64-${{ steps.version.outputs.version }}` |
+            | Windows (x86_64) | `benchmark-windows-x86_64-${{ steps.version.outputs.version }}.exe` |
+
+            ### Hızlı Kurulum
+
+            #### macOS
+            ```bash
+            curl -sL https://github.com/ozanbozkurtt/perf-analyzer/releases/download/${{ steps.version.outputs.version }}/install.sh | bash
+            ```
+
+            #### Linux
+            ```bash
+            curl -sL https://github.com/ozanbozkurtt/perf-analyzer/releases/download/${{ steps.version.outputs.version }}/install.sh | bash
+            ```
+
+            #### Windows (PowerShell)
+            ```powershell
+            iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/ozanbozkurtt/perf-analyzer/${{ steps.version.outputs.version }}/install.ps1'))
+            ```
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/checksums.txt
+          asset_name: checksums.txt
+          asset_content_type: text/plain
+
+      - name: Upload Linux x86_64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/benchmark-linux-x86_64-${{ steps.version.outputs.version }}
+          asset_name: benchmark-linux-x86_64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Linux ARM64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/benchmark-linux-arm64-${{ steps.version.outputs.version }}
+          asset_name: benchmark-linux-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS x86_64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/benchmark-macos-x86_64-${{ steps.version.outputs.version }}
+          asset_name: benchmark-macos-x86_64
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS ARM64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/benchmark-macos-arm64-${{ steps.version.outputs.version }}
+          asset_name: benchmark-macos-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows x86_64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/benchmark-windows-x86_64-${{ steps.version.outputs.version }}.exe
+          asset_name: benchmark-windows-x86_64.exe
+          asset_content_type: application/octet-stream

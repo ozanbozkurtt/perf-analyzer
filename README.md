@@ -15,12 +15,60 @@
 
 ## Kurulum
 
-### Ön Koşullar
+### 🚀 Hızlı Kurulum (Derlenmiş Binary'ler)
+
+Go yüklü olmadan direkt çalışabilen derlenmiş binary'leri kullanabilirsiniz.
+
+#### macOS
+```bash
+# Apple Silicon (M1/M2/M3)
+curl -sL https://github.com/ozanbozkurtt/perf-analyzer/releases/download/latest/install.sh | bash
+
+# Intel
+curl -sL https://github.com/ozanbozkurtt/perf-analyzer/releases/download/latest/install.sh | bash
+```
+
+#### Linux
+```bash
+# x86_64
+curl -sL https://github.com/ozanbozkurtt/perf-analyzer/releases/download/latest/install.sh | bash
+
+# ARM64
+curl -sL https://github.com/ozanbozkurtt/perf-analyzer/releases/download/latest/install.sh | bash
+```
+
+#### Windows (PowerShell)
+```powershell
+# Administrator olarak PowerShell'i açın
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/ozanbozkurtt/perf-analyzer/main/install.ps1'))
+```
+
+#### Manuel Kurulum
+[GitHub Releases](https://github.com/ozanbozkurtt/perf-analyzer/releases) sayfasından ilgili platformun binary'sini indirin ve `/usr/local/bin` (macOS/Linux) veya `Program Files` (Windows) klasörüne kopyalayın.
+
+### 📦 Releases
+
+En son sürümleri ve tüm platformlar için binary'leri [GitHub Releases](https://github.com/ozanbozkurtt/perf-analyzer/releases) sayfasından indirebilirsiniz.
+
+| Platform | Binary |
+|----------|--------|
+| macOS (Apple Silicon M1/M2/M3) | `benchmark-macos-arm64` |
+| macOS (Intel) | `benchmark-macos-x86_64` |
+| Linux (ARM64) | `benchmark-linux-arm64` |
+| Linux (x86_64) | `benchmark-linux-x86_64` |
+| Windows (x86_64) | `benchmark-windows-x86_64.exe` |
+
+### 🔨 Kaynak Koddan Derleme
+
+Go 1.21 veya daha yeni bir sürümü varsa kaynaktan derleyebilirsiniz.
+
+#### Ön Koşullar
 
 - Go 1.21 veya daha yeni bir sürüm
+- Git
 - Linux, macOS veya Windows işletim sistemi
 
-### Adımlar
+#### Adımlar
 
 1. Depoyu klonlayın:
 ```bash
@@ -38,20 +86,40 @@ go mod download
 go build -o bin/benchmark cmd/benchmark/main.go
 ```
 
+4. Multi-platform derlemesi (Linux, macOS, Windows için):
+```bash
+./build.sh v1.0.0
+```
+
 ## Kullanım
 
 ### Temel Kullanım
 
-Aracı çalıştırmak çok basit:
+#### Kurulmuş Binary'yle
+```bash
+benchmark
+```
 
+#### Kaynak Koddan
+Derlediyseniz:
 ```bash
 ./bin/benchmark
 ```
 
-veya geliştirme sırasında doğrudan:
-
+Geliştirme sırasında doğrudan:
 ```bash
 go run cmd/benchmark/main.go
+```
+
+### Komut Satırı Seçenekleri
+
+```bash
+benchmark [options]
+
+Options:
+  -h, --help      Bu yardımı göster
+  -v, --version   Sürüm bilgisini göster
+  -j, --json      Çıktıyı JSON formatında sun
 ```
 
 ### Çıktı Örneği
@@ -216,14 +284,88 @@ Bu proje MIT Lisansı altında dağıtılmaktadır. Detaylar için [LICENSE](LIC
 
 Sorular veya öneriler için GitHub Issues'ı kullanın veya ozan.bozkurt@ode.al adresine e-posta gönderin.
 
+## Sürümler
+
+### Mevcut Sürümleri Görmek
+
+```bash
+# Cihazınızda kurulu sürümü kontrol edin
+benchmark --version
+
+# Tüm sürümleri GitHub'dan görüntüleyin
+# https://github.com/ozanbozkurtt/perf-analyzer/releases
+```
+
+### Güncelleme
+
+Yeni sürüme güncellemek için kurulum scriptini tekrar çalıştırın. En son sürümü otomatik olarak indirecektir:
+
+```bash
+# macOS/Linux
+curl -sL https://github.com/ozanbozkurtt/perf-analyzer/releases/download/latest/install.sh | bash
+
+# Windows (PowerShell Admin)
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/ozanbozkurtt/perf-analyzer/main/install.ps1'))
+```
+
+## CI/CD İntegrasyonu
+
+### GitHub Actions
+
+Depo bir GitHub Actions workflow'u ile donatılmıştır. Her yeni tag oluşturulduğunda otomatik olarak multi-platform binary'ler derlenip release yapılır.
+
+Tag oluşturmak için:
+```bash
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin v1.0.0
+```
+
+### GoReleaser (Opsiyonel)
+
+Yerel olarak GoReleaser ile release yapabilirsiniz:
+
+```bash
+# GoReleaser yükleyin
+brew install goreleaser  # macOS
+# veya
+# https://goreleaser.com/install/
+
+# Release yapın (draft mod)
+goreleaser release --skip=publish --skip=validate
+
+# Production release
+goreleaser release
+```
+
 ## Destek
 
 Aracı faydalı bulursanız, lütfen:
 - ⭐ Repository'e star verin
-- 🐛 Sorun bildirin
-- 💡 Önerilerde bulunun
+- 🐛 [Sorun bildirin](https://github.com/ozanbozkurtt/perf-analyzer/issues)
+- 💡 [Önerilerde bulunun](https://github.com/ozanbozkurtt/perf-analyzer/discussions)
 - 🤝 Katkıda bulunun
 
 ---
 
 **Mutlu benchmarking! 🚀**
+
+## Sık Sorulan Sorular (FAQ)
+
+### S: Go yüklü değilse kullanabilir miyim?
+**C:** Evet! GitHub Releases sayfasından derlenmiş binary'leri indirebilirsiniz. Go kurulması gerekmez.
+
+### S: Hangi platformlar destekleniyor?
+**C:** macOS (Intel ve Apple Silicon), Linux (x86_64 ve ARM64) ve Windows (x86_64) desteklenmektedir.
+
+### S: Binary'nin boyutu ne kadar?
+**C:** Derlenmiş binary'ler 3-5 MB arasındadır. CGO_ENABLED=0 ile derlendikleri için herhangi bir bağımlılığa ihtiyaçları yoktur.
+
+### S: Nasıl kontrol edebilirim ki binary güvenli?
+**C:** SHA256 checksum'ları GitHub Releases sayfasında mevcuttur. İndirdikten sonra doğrulayabilirsiniz:
+```bash
+sha256sum benchmark-* > checksums.txt
+sha256sum -c checksums.txt
+```
+
+### S: Windows'ta kurulum hakkında bilgi?
+**C:** PowerShell scriptini kullanın veya binary'yi manuel olarak Program Files'a kopyalayın. Administrator izni gerekebilir.
